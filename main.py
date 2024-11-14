@@ -2,7 +2,7 @@ import csv
 import datetime
 import numpy as np
 from matplotlib import pyplot
-# from CoolProp improt ...
+# from CoolProp import ...
 
 # Functions for number 1 & 2
 # TODO unpack csv into 2d array
