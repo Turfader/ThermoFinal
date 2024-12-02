@@ -3,6 +3,7 @@ from datetime import datetime
 import numpy as np
 from matplotlib import pyplot
 import openpyxl
+import os
 # from CoolProp import ...
 
 
@@ -77,7 +78,8 @@ def get_mean(array: np.ndarray) -> float:
 
 
 if __name__ == "__main__":
-    # unpack_arr_and_filter()
+    if not os.path.exists("our_data.csv"):
+        unpack_arr_and_filter()
     data_array = get_data_array()
     print(data_array[0])
   
