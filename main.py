@@ -1,7 +1,5 @@
 import csv
 from datetime import datetime
-from idlelib.sidebar import ShellSidebar
-
 import numpy as np
 from matplotlib import pyplot
 import openpyxl
@@ -73,7 +71,8 @@ def get_data_array(path="our_data_usc.csv") -> np.ndarray:
     return np.genfromtxt(path, delimiter=',', skip_header=1, dtype="str")
 
 # TODO add heat transfer rate function
-def heat_transfer_rate():
+def heat_transfer_rate(unit="usc"):
+    # imperial
     pass
 
 # TODO add calculated heat transfer rate of second loop to array
@@ -125,16 +124,7 @@ def mass_balance(SHWS, SHWR, PHWR, Q_SHWS, cp= 1000):
 
     return m_primary, m_bypass
 
-# Test values
-SHWS = 195.2
-SHWR = 172.7
-PHWR = 186.6
-Q_SHWS = 1329.6879
 
-# Print mass flow rate of primary and bypass
-mass_flow_rate_primary, mass_flow_rate_bypass = mass_balance(PHWS, PHWR, SHWS)
-print(f"Mass flow rate through the primary loop: {mass_flow_rate_primary:.2f} kg/s")
-print(f"Mass flow rate through the bypass pipe: {mass_flow_rate_bypass:.2f} kg/s")
 
 ### If you want to work on code, 4 would be a good place to do so
 # TODO add function for mass balance
@@ -174,4 +164,15 @@ if __name__ == "__main__":
             print("Make sure you have 'Temp_Boiler_Plant_Data_ Fall24.xlsx' in the same directory as main.py")
     data_array = get_data_array()
     print(data_array[0])
-  
+    '''
+    # Test values
+    SHWS = 195.2
+    SHWR = 172.7
+    PHWR = 186.6
+    Q_SHWS = 1329.6879
+
+    # Print mass flow rate of primary and bypass
+    mass_flow_rate_primary, mass_flow_rate_bypass = mass_balance(PHWS, PHWR, SHWS)
+    print(f"Mass flow rate through the primary loop: {mass_flow_rate_primary:.2f} kg/s")
+    print(f"Mass flow rate through the bypass pipe: {mass_flow_rate_bypass:.2f} kg/s")
+    '''
