@@ -138,11 +138,7 @@ SHWR = 172.7
 PHWR = 186.6
 Q_SHWS = 1329.6879
 
-# Print mass flow rate of primary and bypass
-mass_flow_rate_primary, mass_flow_rate_bypass = mass_balance(PHWS, PHWR, SHWS)
-print(f"Mass flow rate through the primary loop: {mass_flow_rate_primary:.2f} kg/s")
-print(f"Mass flow rate through the bypass pipe: {mass_flow_rate_bypass:.2f} kg/s")
-'''
+
 ### If you want to work on code, 4 would be a good place to do so
 # TODO add function for mass balance
 
@@ -181,4 +177,15 @@ if __name__ == "__main__":
             print("Make sure you have 'Temp_Boiler_Plant_Data_ Fall24.xlsx' in the same directory as main.py")
     data_array = get_data_array()
     print(data_array[0])
-  
+    '''
+    # Test values
+    SHWS = 195.2
+    SHWR = 172.7
+    PHWR = 186.6
+    Q_SHWS = 1329.6879
+
+    # Print mass flow rate of primary and bypass
+    mass_flow_rate_primary, mass_flow_rate_bypass = mass_balance(PHWS, PHWR, SHWS)
+    print(f"Mass flow rate through the primary loop: {mass_flow_rate_primary:.2f} kg/s")
+    print(f"Mass flow rate through the bypass pipe: {mass_flow_rate_bypass:.2f} kg/s")
+    '''
