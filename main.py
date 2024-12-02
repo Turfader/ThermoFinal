@@ -1,5 +1,7 @@
 import csv
 from datetime import datetime
+from idlelib.sidebar import ShellSidebar
+
 import numpy as np
 from matplotlib import pyplot
 import openpyxl
@@ -42,11 +44,55 @@ def get_mean(array: np.ndarray) -> float:
     return np.mean(array)
 
 # Functions for number 3
+
 # TODO add function to calculate efficiency of boilers
 
 # TODO graph efficiency vs datetime
 
 # Functions for number 4
+def mass_balance(SHWS, SHWR, PHWR, Q_SHWS, cp= 1000):
+
+     #Calculate mass flow rate of water through bypass
+
+     #Parameters:
+     #SHWS (float): Primary Hot Water Supply Temperature (F)
+     #SHWR (float): Primary Hot Water Return Temperature (F)
+     #PHWR (float): Primary Hot Water Return Temperature (F)
+     #Q_SHWS (float): Secondary Hot Water Supply Flowrate (MBTU/hr)
+     #cp (float): Specific heat capacity of water (MBTU/lb F) {default 1000)
+
+    #Returns:
+    #float: Mass flow rate through bypass pipe (lb/hr)
+
+
+    # Calculate difference in temperature of primary loop
+    delta_T_primary = PHWR - SHWS
+
+    # Calculate difference in temperature of secondary loop
+    delta_T_secondary = SHWR - SHWS
+
+    #Calculate mass flow rate through primary loop
+    m_primary = Q_SHWS / (cp * delta_T_primary)
+
+    # Calculate mass flow rate through secondary pipe
+    m_secondary = Q_SHWS / (cp * delta_T_secondary)
+
+    #Calculate mass flow rate through bypass pipe
+    m_bypass = m_primary - Q_SHWS
+
+    return m_primary, m_bypass
+
+# Test values
+SHWS = 195.2
+SHWR = 172.7
+PHWR = 186.6
+Q_SHWS = 1329.6879
+
+# Print mass flow rate of primary and bypass
+mass_flow_rate_primary, mass_flow_rate_bypass = mass_balance(PHWS, PHWR, SHWS)
+print(f"Mass flow rate through the primary loop: {mass_flow_rate_primary:.2f} kg/s")
+print(f"Mass flow rate through the bypass pipe: {mass_flow_rate_bypass:.2f} kg/s")
+
 ### If you want to work on code, 4 would be a good place to do so
 # TODO add function for mass balance
 
