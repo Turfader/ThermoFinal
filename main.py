@@ -1,11 +1,34 @@
 import csv
-import datetime
+from datetime import datetime
 import numpy as np
 from matplotlib import pyplot
+import openpyxl
 # from CoolProp import ...
 
+
 # Functions for number 1 & 2
-# TODO unpack csv into 2d array
+def unpack_arr_and_filter(start_date=datetime(2024, 4, 26, 0, 0, 0),
+                          end_date=datetime(2024, 5, 1, 0, 0, 0),
+                          path_in="Temp_Boiler_Plant_Data_ Fall24.xlsx",
+                          path_out="our_data.csv") -> None:
+    workbook = openpyxl.load_workbook(path_in)
+
+    # Select the active sheet
+    sheet = workbook.active
+
+    with open(path_out, mode='w', newline='') as outfile:
+        writer = csv.writer(outfile)
+
+        # Write the header row (first row from the sheet)
+        header = [cell.value for cell in sheet[1]]
+        writer.writerow(header)
+
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            row_date = row[0]
+
+            if start_date <= row_date <= end_date:
+                writer.writerow(row)
+
 
 # TODO add heat transfer rate function
 
@@ -50,5 +73,5 @@ def get_mean(array: np.ndarray) -> float:
 
 
 if __name__ == "__main__":
-    print("Hello world")
+    unpack_arr_and_filter()
   
