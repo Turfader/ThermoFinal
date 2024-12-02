@@ -30,11 +30,15 @@ def unpack_arr_and_filter(start_date=datetime(2024, 4, 26, 0, 0, 0),
                 writer.writerow(row)
 
 
+def get_data_array(path="our_data.csv") -> np.ndarray:
+    return np.genfromtxt(path, delimiter=',', skip_header=1, dtype="str")
+
 # TODO add heat transfer rate function
 
 # TODO add calculated heat transfer rate of second loop to array
 
 # TODO graph calculated heat transfer rate vs. date time (secondary loop for one, primary loop for 2)
+
 
 # Average
 # to be used for average value of Q dot for number one and two, efficiency for number 3
@@ -73,5 +77,7 @@ def get_mean(array: np.ndarray) -> float:
 
 
 if __name__ == "__main__":
-    unpack_arr_and_filter()
+    # unpack_arr_and_filter()
+    data_array = get_data_array()
+    print(data_array[0])
   
