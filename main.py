@@ -1,7 +1,5 @@
 import csv
 from datetime import datetime
-from idlelib.sidebar import ShellSidebar
-
 import numpy as np
 from matplotlib import pyplot
 import openpyxl
@@ -72,11 +70,20 @@ def unpack_arr_and_filter(start_date=datetime(2024, 4, 26, 0, 0, 0),
 def get_data_array(path="our_data_usc.csv") -> np.ndarray:
     return np.genfromtxt(path, delimiter=',', skip_header=1, dtype="str")
 
+
 # TODO add heat transfer rate function
-def heat_transfer_rate():
+def heat_transfer_rate(temp1, temp2, flow, cp=1000, unit="usc"):
+    if unit =="si":
+        cp=4.186
     pass
 
+
 # TODO add calculated heat transfer rate of second loop to array
+def add_secloop_htr(array, unit="usc"):
+    for i in len(array):
+        if i == 0:
+            array[i][7].append("Secondary pipe heat transfer rate")
+        array[i][7].append(heat_transfer_rate(array[i][2], array[i][3], array[i][5], unit=unit))
 
 # TODO graph calculated heat transfer rate vs. date time (secondary loop for one, primary loop for 2)
 
@@ -91,7 +98,7 @@ def get_mean(array: np.ndarray) -> float:
 # TODO add function to calculate efficiency of boilers
 
 # TODO graph efficiency vs datetime
-
+'''
 # Functions for number 4
 def mass_balance(SHWS, SHWR, PHWR, Q_SHWS, cp= 1000):
 
@@ -135,7 +142,7 @@ Q_SHWS = 1329.6879
 mass_flow_rate_primary, mass_flow_rate_bypass = mass_balance(PHWS, PHWR, SHWS)
 print(f"Mass flow rate through the primary loop: {mass_flow_rate_primary:.2f} kg/s")
 print(f"Mass flow rate through the bypass pipe: {mass_flow_rate_bypass:.2f} kg/s")
-
+'''
 ### If you want to work on code, 4 would be a good place to do so
 # TODO add function for mass balance
 
