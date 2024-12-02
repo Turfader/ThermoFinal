@@ -79,7 +79,10 @@ def get_mean(array: np.ndarray) -> float:
 
 if __name__ == "__main__":
     if not os.path.exists("our_data.csv"):
-        unpack_arr_and_filter()
+        try:
+            unpack_arr_and_filter()
+        except FileNotFoundError:
+            print("Make sure you have 'Temp_Boiler_Plant_Data_ Fall24.xlsx' in the same directory as main.py")
     data_array = get_data_array()
     print(data_array[0])
   
