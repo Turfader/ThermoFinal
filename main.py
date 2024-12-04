@@ -103,7 +103,7 @@ def heat_transfer_rate(temp1, temp2, flow, fluid="water", unit="usc"):
     return flow * (temp1 - temp2) * cp
 
 
-# TODO add calculated heat transfer rate of second loop to array
+# adds calculated heat transfer rate of second loop to array
 def add_sec_loop_htr(array, fluid="water", unit="usc") -> np.ndarray:
     htr_values = [
         heat_transfer_rate(
@@ -114,9 +114,19 @@ def add_sec_loop_htr(array, fluid="water", unit="usc") -> np.ndarray:
     htr_column = np.array(htr_values).reshape(-1, 1)
     return np.hstack((array, htr_column))
 
+# adds calculated htr of primary loop to array
+def add_gas_primary_htr(array, fluid="gas", unit="usc") -> np.ndarray:
+    htr_values = [
+        heat_transfer_rate(
+            float(row[2]), float(row[1]), float(row[6]), fluid=fluid, unit=unit
+        )
+        for row in array
+    ]
+    htr_column = np.array(htr_values).reshape(-1, 1)
+    return np.hstack((array, htr_column))
 
 # TODO graph calculated heat transfer rate vs. date time (secondary loop for one, primary loop for 2)
-def plot_ht_dt(x_axis, y_axis, unit="usc"):
+def plot_ht_t(x_axis, y_axis, unit="usc"):
     plt.title(f"Heat Transfer Rate vs. Date and Time")
     plt.ylabel(f"Heat Transfer Rate {'(KW)' if unit =='si' else '(MBTU/hour)'}")
     plt.xlabel("Date and Time")
@@ -127,11 +137,6 @@ def plot_ht_dt(x_axis, y_axis, unit="usc"):
              color="red")  # change to plt.plot() for a line plot instead
     plt.show()  # uncomment this if you want to see the graph
     plt.savefig(f"SecondaryPipeHTRvsTime.png")  # uncomment to save
-
-# Average
-# to be used for average value of Q dot for number one and two, efficiency for number 3
-def get_mean(array: np.ndarray) -> float:
-    return np.mean(array)
 
 # Functions for number 3
 
@@ -215,9 +220,22 @@ if __name__ == "__main__":
     data_array = get_data_array()
 
     data_array = add_sec_loop_htr(data_array)
+
+    #plot_ht_t(data_array[:, 0], data_array[:, 7])
+    print(f"Average Q for secondary loop (us customary) = {np.mean(data_array[:, 7].astype(float))} MBTU/hr")
+
+    data_array = add_gas_primary_htr(data_array)
+
+    plot_ht_t(data_array[:, 0], data_array[:, 8])
+    print(f"Average Q for secondary loop (us customary) = {np.mean(data_array[:, 8].astype(float))} MBTU/hr")
+
     print(data_array[0:10])
 
-    plot_ht_dt(data_array[:, 0], data_array[:, 7])
+
+
+
+
+
 
 
     '''
