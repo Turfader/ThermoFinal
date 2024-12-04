@@ -14,6 +14,21 @@ ureg.formatter.default_format = '.3f'
 
 
 # Functions for number 1 & 2
+
+def convert_header(header):
+    replacements = {
+        "(°F)": "(°C)",
+        "(gpm)": "(lpm)",
+        "(SCFH)": "(cmh)"
+    }
+    converted_header = []
+    for item in header:
+        for old_unit, new_unit in replacements.items():
+            if old_unit in item:
+                item = item.replace(old_unit, new_unit)
+        converted_header.append(item)
+    return converted_header
+
 def unpack_arr_and_filter(start_date=datetime(2024, 4, 26, 0, 0, 0),
                           end_date=datetime(2024, 5, 1, 0, 0, 0),
                           path_in="Temp_Boiler_Plant_Data_ Fall24.xlsx",
@@ -40,7 +55,11 @@ def unpack_arr_and_filter(start_date=datetime(2024, 4, 26, 0, 0, 0),
 
         # Write the header row (first row from the sheet)
         header = [cell.value for cell in sheet[1]]
+        if unit == "si":
+            header = convert_header(header)
         writer.writerow(header)
+
+
 
         for row in sheet.iter_rows(min_row=2, values_only=True):
             row_date = row[0]
@@ -107,9 +126,11 @@ def get_mean(array: np.ndarray) -> float:
 # TODO add function to calculate efficiency of boilers
 
 # TODO graph efficiency vs datetime
-'''
+
 # Functions for number 4
-def mass_balance(SHWS, SHWR, PHWR, Q_SHWS, cp= 1000):
+def mass_balance(SHWS, SHWR, PHWR, Q_SHWS, cp= 1000, unit="usc"):
+    if unit == "si":
+        cp = 4184  # J/(Kg K)
 
      #Calculate mass flow rate of water through bypass
 
@@ -141,14 +162,7 @@ def mass_balance(SHWS, SHWR, PHWR, Q_SHWS, cp= 1000):
 
     return m_primary, m_bypass
 
-# Test values
-SHWS = 195.2
-SHWR = 172.7
-PHWR = 186.6
-Q_SHWS = 1329.6879
-'''
 
-### If you want to work on code, 4 would be a good place to do so
 # TODO add function for mass balance
 
 # TODO add function for energy balance
