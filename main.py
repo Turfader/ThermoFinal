@@ -1,7 +1,7 @@
 import csv
 from datetime import datetime
 import numpy as np
-from matplotlib import pyplot
+from matplotlib import pyplot as plt
 import openpyxl
 import os
 import pint
@@ -79,14 +79,23 @@ def heat_transfer_rate(temp1, temp2, flow, cp=1000, unit="usc"):
 
 
 # TODO add calculated heat transfer rate of second loop to array
-def add_secloop_htr(array, unit="usc"):
+def add_sec_loop_htr(array, unit="usc"):
     for i in len(array):
         if i == 0:
             array[i][7].append("Secondary pipe heat transfer rate")
         array[i][7].append(heat_transfer_rate(array[i][2], array[i][3], array[i][5], unit=unit))
 
-# TODO graph calculated heat transfer rate vs. date time (secondary loop for one, primary loop for 2)
 
+# TODO graph calculated heat transfer rate vs. date time (secondary loop for one, primary loop for 2)
+def plot(x_axis, y_axis):
+    plt.title(f"{x_axis[0]} vs. {y_axis[0]}")
+    plt.xlabel(x_axis[0])
+    plt.ylabel(y_axis[0])
+    plt.legend()
+    plt.grid(True)
+    plt.scatter(x_axis[1::], y_axis[1::], color="red")  # change to plt.plot() for a line plot instead
+    # plt.show()  # uncomment this if you want to see the graph
+    # plt.savefig(f"{x_axis[0]} vs {y_axis[0]}.png")  # uncomment to save
 
 # Average
 # to be used for average value of Q dot for number one and two, efficiency for number 3
