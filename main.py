@@ -89,33 +89,44 @@ def get_data_array(path="our_data_usc.csv") -> np.ndarray:
     return np.genfromtxt(path, delimiter=',', skip_header=1, dtype="str")
 
 
-# TODO add heat transfer rate function
-def heat_transfer_rate(temp1, temp2, flow, cp=1e-6, unit="usc"):  # cp_usc MBTU / lb F
-    if unit =="si":
-        cp=4.186  # kJ / Kg K
-    pass
+# heat transfer rate function
+def heat_transfer_rate(temp1, temp2, flow, fluid="water", unit="usc"):
+    if fluid == "water":
+        cp = 1e-3  # cp_usc MBTU / lb F for water using 1e3 for M
+        if unit =="si":
+            cp=4.186  # kJ / Kg K for water
+    elif fluid == "gas":
+        cp = 1150e-3 # MBTU / SCF for natural gas
+        if unit == "si":
+            cp = 42.8e3  # kJ / m**3
+
+    return flow * (temp1 - temp2) * cp
 
 
 # TODO add calculated heat transfer rate of second loop to array
-def add_sec_loop_htr(array, unit="usc") -> list:
-    for i in len(array):
-        array[i][7].append(heat_transfer_rate(array[i][2], array[i][3], array[i][5], unit=unit))
-
-    to_write = array[i][7].insert(0, f"Secondary Pipe Heat Transfer Rate ({'kW' if unit =='si' else 'MBTU/hr'})")
-    # write to file here
-    return array
+def add_sec_loop_htr(array, fluid="water", unit="usc") -> np.ndarray:
+    htr_values = [
+        heat_transfer_rate(
+            float(row[2]), float(row[3]), float(row[5]), fluid=fluid, unit=unit
+        )
+        for row in array
+    ]
+    htr_column = np.array(htr_values).reshape(-1, 1)
+    return np.hstack((array, htr_column))
 
 
 # TODO graph calculated heat transfer rate vs. date time (secondary loop for one, primary loop for 2)
 def plot_ht_dt(x_axis, y_axis, unit="usc"):
     plt.title(f"Heat Transfer Rate vs. Date and Time")
-    plt.xlabel(f"Heat Transfer Rate {'KW' if unit =='si' else 'MBTU/hour'}")
-    plt.ylabel("Date and Time")
-    plt.legend()
+    plt.ylabel(f"Heat Transfer Rate {'(KW)' if unit =='si' else '(MBTU/hour)'}")
+    plt.xlabel("Date and Time")
+    #plt.legend()
     plt.grid(True)
-    plt.scatter(x_axis[::], y_axis[::], color="red")  # change to plt.plot() for a line plot instead
-    # plt.show()  # uncomment this if you want to see the graph
-    # plt.savefig(f"{x_axis[0]} vs {y_axis[0]}.png")  # uncomment to save
+    plt.plot([datetime.strptime(date, "%Y-%m-%d %H:%M:%S") for date in x_axis],
+             [float(value) for value in y_axis],
+             color="red")  # change to plt.plot() for a line plot instead
+    plt.show()  # uncomment this if you want to see the graph
+    plt.savefig(f"SecondaryPipeHTRvsTime.png")  # uncomment to save
 
 # Average
 # to be used for average value of Q dot for number one and two, efficiency for number 3
@@ -202,8 +213,14 @@ if __name__ == "__main__":
         except FileNotFoundError:
             print("Make sure you have 'Temp_Boiler_Plant_Data_ Fall24.xlsx' in the same directory as main.py")
     data_array = get_data_array()
-    print(data_array[0])
 
+    data_array = add_sec_loop_htr(data_array)
+    print(data_array[0:10])
+
+    plot_ht_dt(data_array[:, 0], data_array[:, 7])
+
+
+    '''
     # Test values
     SHWS = 195.2
     SHWR = 172.7
@@ -214,3 +231,4 @@ if __name__ == "__main__":
     mass_flow_rate_primary, mass_flow_rate_bypass = mass_balance(PHWS, PHWR, SHWS)
     print(f"Mass flow rate through the primary loop: {mass_flow_rate_primary:.2f} kg/s")
     print(f"Mass flow rate through the bypass pipe: {mass_flow_rate_bypass:.2f} kg/s")
+    '''
