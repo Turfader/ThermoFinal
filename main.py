@@ -7,6 +7,8 @@ import os
 import pint
 # from CoolProp import ...
 
+np.seterr(divide='ignore', invalid='ignore')
+
 # keep for conversion
 ureg = pint.UnitRegistry()
 Q_ = ureg.Quantity
@@ -73,11 +75,9 @@ def unpack_arr_and_filter(start_date=datetime(2024, 4, 26, 0, 0, 0),
                 row[3] = round(Q_(row[3], ureg.degF).to(temp_unit).magnitude, 3)
                 row[4] = round(Q_(row[4], ureg.degF).to(temp_unit).magnitude, 3)
 
-                # Convert SHWS Flow (gpm) to the desired flow unit (L/min or gpm)
                 row[5] = round((row[5] * ureg.gallon / ureg.minute).to(
                     flow_unit).magnitude, 3)  # Convert from gpm to L/min or gpm
 
-                # Convert Gas Flow (SCFH) to the desired gas flow unit (m³/h or SCFH)
                 row[6] = round((row[6] * ureg.ft**3 / ureg.hour).to(
                     gas_flow_unit).magnitude, 3)  # Convert from SCFH to m³/h or SCFH
 
@@ -127,7 +127,7 @@ def add_gas_primary_htr(array, fluid="gas", unit="usc") -> np.ndarray:
     htr_column = np.array(htr_values).reshape(-1, 1)
     return np.hstack((array, htr_column))
 
-# TODO graph calculated heat transfer rate vs. date time (secondary loop for one, primary loop for 2)
+
 def plot_ht_t(x_axis, y_axis, title, unit="usc"):
     plt.title(f"{title} Heat Transfer Rate vs. Date and Time")
     plt.ylabel(f"Heat Transfer Rate {'(KW)' if unit =='si' else '(MBTU/hour)'}")
@@ -140,9 +140,7 @@ def plot_ht_t(x_axis, y_axis, title, unit="usc"):
     plt.show()  # uncomment this if you want to see the graph
     #plt.savefig(f"{title} vs datetime")  # uncomment to save
 
-# Functions for number 3
 
-# TODO graph efficiency vs datetime
 def plot_eff_t(x_axis, y_axis):
     plt.title(f"Efficiency vs. Date and Time")
     plt.ylabel(f"Thermal Efficiency")
@@ -155,64 +153,30 @@ def plot_eff_t(x_axis, y_axis):
     plt.show()  # uncomment this if you want to see the graph
     # plt.savefig(f"efficiency vs datetime")  # uncomment to save
 
-# Functions for number 4
-def mass_balance(SHWS, SHWR, PHWR, Q_SHWS, cp= 1000, unit="usc"):
+
+def mfr_primary(array, unit="usc"):
+    cp = 1  # cp_usc BTU / lb F for water using 1e3 for M
     if unit == "si":
-        cp = 4184  # J/(Kg K)
-
-     #Calculate mass flow rate of water through bypass
-
-     #Parameters:
-     #SHWS (float): Primary Hot Water Supply Temperature (F)
-     #SHWR (float): Primary Hot Water Return Temperature (F)
-     #PHWR (float): Primary Hot Water Return Temperature (F)
-     #Q_SHWS (float): Secondary Hot Water Supply Flowrate (MBTU/hr)
-     #cp (float): Specific heat capacity of water (MBTU/lb F) {default 1000)
-
-    #Returns:
-    #float: Mass flow rate through bypass pipe (lb/hr)
+        cp = 4.186  # kJ / Kg K for water
+    mfr = [
+        float(row[8])/(cp*(float(row[2])-float(row[1])))*1e3/60  # pounds of water per minute
+        for row in array
+    ]
+    htr_column = np.array(mfr).reshape(-1, 1)
+    return np.hstack((array, htr_column))
 
 
-    # Calculate difference in temperature of primary loop
-    delta_T_primary = PHWR - SHWS
-
-    # Calculate difference in temperature of secondary loop
-    delta_T_secondary = SHWR - SHWS
-
-    #Calculate mass flow rate through primary loop
-    m_primary = Q_SHWS / (cp * delta_T_primary)
-
-    # Calculate mass flow rate through secondary pipe
-    m_secondary = Q_SHWS / (cp * delta_T_secondary)
-
-    #Calculate mass flow rate through bypass pipe
-    m_bypass = m_primary - Q_SHWS
-
-    return m_primary, m_bypass
-
-
-# TODO add function for mass balance
-
-# TODO add function for energy balance
-
-# TODO add function that calls mass and energy balance and gets mass flow rate
-
-# Functions for number 5
-# TODO add function to calc water mass flow rate through primary loop. Use functions from 4 with numbers from 5
-
-# Functions for number 6
-# TODO Using data from 4 and 5, function to calc water percent flowing through common pipe. Mass through bypass divided by mass through primary
-
-# TODO graph percent vs datetime
-
-# Functions for number 7
-# TODO mass flow rate through campus
-
-# TODO mass flow rate through campus divided by mass flowrate through primary loop (from 5)
-
-# TODO plot percent vs datetime
-
-# TODO get average value of percent of h2o to campus
+def plot_bpp_t(x_axis, y_axis):
+    plt.title(f"Bypass Pipe Percent Flow vs. Date and Time")
+    plt.ylabel(f"Percent Flow")
+    plt.xlabel("Date and Time")
+    # plt.legend()
+    plt.grid(True)
+    plt.plot([datetime.strptime(date, "%Y-%m-%d %H:%M:%S") for date in x_axis],
+             [float(value) for value in y_axis],
+             color="red")  # change to plt.plot() for a line plot instead
+    plt.show()  # uncomment this if you want to see the graph
+    # plt.savefig(f"{title} vs datetime")  # uncomment to save
 
 
 if __name__ == "__main__":
@@ -240,14 +204,21 @@ if __name__ == "__main__":
 
     print(f"average efficiency = {np.mean(data_array[:, 7].astype(float))/np.mean(data_array[:, 8].astype(float))}")
 
-    data_array = np.column_stack((data_array, data_array[:, 7].astype(float)/data_array[:, 8].astype(float)))
+    data_array = np.column_stack((data_array, np.nan_to_num(data_array[:, 7].astype(float) / data_array[:, 8].astype(float), nan=0.0)))
 
-    plot_eff_t(data_array[:, 0], data_array[:, 9])
+    #plot_eff_t(data_array[:, 0], data_array[:, 9])
 
+    data_array = mfr_primary(data_array)
 
+    data_array = np.column_stack((data_array, data_array[:, 10].astype(float)-data_array[:, 5].astype(float)*8.33))
 
+    data_array = np.column_stack((data_array, np.nan_to_num(data_array[:, 11].astype(float)/data_array[:, 10].astype(float)*100, nan=0.0, posinf=0, neginf=0)))
 
-    print(data_array[0:10])
+    print(f"average percent through bypass {np.mean(data_array[:, 12].astype(float))}%")
+
+    plot_bpp_t(data_array[:, 0], data_array[:, 12])
+
+    #print(data_array[0:10])
 
 
 
