@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 import openpyxl
 import os
 import pint
-# from CoolProp import ...
+from copy import deepcopy
 
 np.seterr(divide='ignore', invalid='ignore')
 
@@ -21,7 +21,9 @@ def convert_header(header):
     replacements = {
         "(°F)": "(°C)",
         "(gpm)": "(lpm)",
-        "(SCFH)": "(cmh)"
+        "(SCFH)": "(cmh)",
+        "(MBTU/H)": "(kW)",
+        "(lbs/min)": "(kg/min)"
     }
     converted_header = []
     for item in header:
@@ -89,6 +91,61 @@ def get_data_array(path="our_data_usc.csv") -> np.ndarray:
     return np.genfromtxt(path, delimiter=',', skip_header=1, dtype="str")
 
 
+def make_csv(arr, unit="usc"):
+    array = deepcopy(arr)
+    header = ["Date", "PHWR Temp (°F)", "SHWS Temp (°F)",
+              "SHWR Temp (°F)", "Common Temp (°F)", "SHWS Flow (gpm)",
+              "Gas Flow (SCFH)", "Sec HTR (MBTU/H)", "Pri HTR (MBTU/H)",
+              "Efficiency η", "Pri MFR (lbs/min)", "Bypass MFR (lbs/min)",
+              "Percent thru Bypass (%)", "Percent thru Sec (%)"]
+
+    if unit == "si":
+        temp_unit = ureg.degC  # Celsius
+        flow_unit = ureg.liters / ureg.minute  # Liters per minute
+        gas_flow_unit = ureg.meter**3 / ureg.hour  # Cubic meters per hour
+        sec_htr_unit = ureg.kW  # kW
+        pri_htr_unit = ureg.kW  # kW
+        mfr_unit = ureg.kg / ureg.minute  # kg/min
+    else:
+        # Default is US Customary units (usc)
+        temp_unit = ureg.degF  # Fahrenheit
+        flow_unit = ureg.gallon / ureg.minute  # Gallons per minute
+        gas_flow_unit = ureg.ft**3 / ureg.hour  # Standard cubic feet per hour
+        sec_htr_unit = ureg.MBTU * 1e-3 / ureg.hour  # MBTU/h
+        pri_htr_unit = ureg.MBTU * 1e-3 / ureg.hour  # MBTU/h
+        mfr_unit = ureg.lbs / ureg.minute  # lbs/min
+
+    if unit == "si":
+        header = convert_header(header)
+        for row in array:
+            row[1] = round(Q_(float(row[1]), ureg.degF).to(temp_unit).magnitude, 3)  # Convert from °F to target temp unit (°C or °F)
+            row[2] = round(Q_(float(row[2]), ureg.degF).to(temp_unit).magnitude, 3)
+            row[3] = round(Q_(float(row[3]), ureg.degF).to(temp_unit).magnitude, 3)
+            row[4] = round(Q_(float(row[4]), ureg.degF).to(temp_unit).magnitude, 3)
+
+            row[5] = round((float(row[5]) * ureg.gallon / ureg.minute).to(
+                flow_unit).magnitude, 3)  # Convert from gpm to L/min or gpm
+
+            row[6] = round((float(row[6]) * ureg.ft ** 3 / ureg.hour).to(
+                gas_flow_unit).magnitude, 3)  # Convert from SCFH to m³/h or SCFH
+
+            row[7] = round(Q_(float(row[7]), ureg.MBTU * 1e-3 / ureg.hour).to(sec_htr_unit).magnitude, 3)
+            row[8] = round(Q_(float(row[8]), ureg.MBTU * 1e-3 / ureg.hour).to(pri_htr_unit).magnitude, 3)
+
+            row[10] = round(Q_(float(row[10]), ureg.lbs / ureg.minute).to(mfr_unit).magnitude, 3)
+            row[11] = round(Q_(float(row[11]), ureg.lbs / ureg.minute).to(mfr_unit).magnitude, 3)
+
+    with open(f"final_{unit}.csv", mode='w', newline='', encoding="utf-8") as file:
+        writer = csv.writer(file)
+
+        # Write the headers
+        writer.writerow(header)
+
+        # Write the rows of the 2D array
+        for row in array:
+            writer.writerow(row)
+
+
 # heat transfer rate function
 def heat_transfer_rate(temp1, temp2, flow, fluid="water", unit="usc"):
     if fluid == "water":
@@ -100,7 +157,7 @@ def heat_transfer_rate(temp1, temp2, flow, fluid="water", unit="usc"):
         if unit == "si":
             cp = 42.8e3  # kJ / m**3
 
-    if fluid =="water":
+    if fluid == "water":
         return flow * (temp1 - temp2) * cp
     return flow * cp
 
@@ -115,6 +172,7 @@ def add_sec_loop_htr(array, fluid="water", unit="usc") -> np.ndarray:
     ]
     htr_column = np.array(htr_values).reshape(-1, 1)
     return np.hstack((array, htr_column))
+
 
 # adds calculated htr of primary loop to array
 def add_gas_primary_htr(array, fluid="gas", unit="usc") -> np.ndarray:
@@ -138,7 +196,7 @@ def plot_ht_t(x_axis, y_axis, title, unit="usc"):
              [float(value) for value in y_axis],
              color="red")  # change to plt.plot() for a line plot instead
     plt.show()  # uncomment this if you want to see the graph
-    #plt.savefig(f"{title} vs datetime")  # uncomment to save
+    plt.savefig(f"{title} vs datetime")  # uncomment to save
 
 
 def plot_eff_t(x_axis, y_axis):
@@ -151,7 +209,7 @@ def plot_eff_t(x_axis, y_axis):
              [float(value) for value in y_axis],
              color="red")  # change to plt.plot() for a line plot instead
     plt.show()  # uncomment this if you want to see the graph
-    # plt.savefig(f"efficiency vs datetime")  # uncomment to save
+    plt.savefig(f"efficiency vs datetime")  # uncomment to save
 
 
 def mfr_primary(array, unit="usc"):
@@ -176,7 +234,20 @@ def plot_bpp_t(x_axis, y_axis):
              [float(value) for value in y_axis],
              color="red")  # change to plt.plot() for a line plot instead
     plt.show()  # uncomment this if you want to see the graph
-    # plt.savefig(f"{title} vs datetime")  # uncomment to save
+    plt.savefig(f"bpp vs datetime")  # uncomment to save
+
+
+def plot_spp_t(x_axis, y_axis):
+    plt.title(f"Secondary Pipe Percent Flow vs. Date and Time")
+    plt.ylabel(f"Percent Flow")
+    plt.xlabel("Date and Time")
+    # plt.legend()
+    plt.grid(True)
+    plt.plot([datetime.strptime(date, "%Y-%m-%d %H:%M:%S") for date in x_axis],
+             [float(value) for value in y_axis],
+             color="red")  # change to plt.plot() for a line plot instead
+    plt.show()  # uncomment this if you want to see the graph
+    #plt.savefig(f"spp vs datetime")  # uncomment to save
 
 
 if __name__ == "__main__":
@@ -216,22 +287,17 @@ if __name__ == "__main__":
 
     print(f"average percent through bypass {np.mean(data_array[:, 12].astype(float))}%")
 
-    plot_bpp_t(data_array[:, 0], data_array[:, 12])
+    #plot_bpp_t(data_array[:, 0], data_array[:, 12])
+
+    data_array = np.column_stack((data_array,
+                                  np.nan_to_num(data_array[:, 5].astype(float) / data_array[:, 10].astype(float) * 8.33 *100,
+                                                nan=0.0, posinf=0, neginf=0)))
+
+    print(f"average percent to school {np.mean(data_array[:, 13].astype(float))}%")
+
+    #plot_spp_t(data_array[:, 0], data_array[:, 13])
 
     #print(data_array[0:10])
 
-
-
-
-    '''
-    # Test values
-    SHWS = 195.2
-    SHWR = 172.7
-    PHWR = 186.6
-    Q_SHWS = 1329.6879
-
-    # Print mass flow rate of primary and bypass
-    mass_flow_rate_primary, mass_flow_rate_bypass = mass_balance(PHWS, PHWR, SHWS)
-    print(f"Mass flow rate through the primary loop: {mass_flow_rate_primary:.2f} kg/s")
-    print(f"Mass flow rate through the bypass pipe: {mass_flow_rate_bypass:.2f} kg/s")
-    '''
+    make_csv(data_array)
+    make_csv(data_array, "si")
