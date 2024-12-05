@@ -247,7 +247,7 @@ def plot_spp_t(x_axis, y_axis):
              [float(value) for value in y_axis],
              color="red")  # change to plt.plot() for a line plot instead
     plt.show()  # uncomment this if you want to see the graph
-    #plt.savefig(f"spp vs datetime")  # uncomment to save
+    plt.savefig(f"spp vs datetime")  # uncomment to save
 
 
 if __name__ == "__main__":
@@ -265,19 +265,19 @@ if __name__ == "__main__":
 
     data_array = add_sec_loop_htr(data_array)
 
-    #plot_ht_t(data_array[:, 0], data_array[:, 7], "Q")
+    plot_ht_t(data_array[:, 0], data_array[:, 7], "Q")
     print(f"Average Q for secondary loop (us customary) = {np.mean(data_array[:, 7].astype(float))} MBTU/hr")
 
     data_array = add_gas_primary_htr(data_array)
 
-    #plot_ht_t(data_array[:, 0], data_array[:, 8], "Q_comb")
+    plot_ht_t(data_array[:, 0], data_array[:, 8], "Q_comb")
     print(f"Average Q for secondary loop (us customary) = {np.mean(data_array[:, 8].astype(float))} MBTU/hr")
 
     print(f"average efficiency = {np.mean(data_array[:, 7].astype(float))/np.mean(data_array[:, 8].astype(float))}")
 
     data_array = np.column_stack((data_array, np.nan_to_num(data_array[:, 7].astype(float) / data_array[:, 8].astype(float), nan=0.0)))
 
-    #plot_eff_t(data_array[:, 0], data_array[:, 9])
+    plot_eff_t(data_array[:, 0], data_array[:, 9])
 
     data_array = mfr_primary(data_array)
 
@@ -287,7 +287,7 @@ if __name__ == "__main__":
 
     print(f"average percent through bypass {np.mean(data_array[:, 12].astype(float))}%")
 
-    #plot_bpp_t(data_array[:, 0], data_array[:, 12])
+    plot_bpp_t(data_array[:, 0], data_array[:, 12])
 
     data_array = np.column_stack((data_array,
                                   np.nan_to_num(data_array[:, 5].astype(float) / data_array[:, 10].astype(float) * 8.33 *100,
@@ -295,9 +295,9 @@ if __name__ == "__main__":
 
     print(f"average percent to school {np.mean(data_array[:, 13].astype(float))}%")
 
-    #plot_spp_t(data_array[:, 0], data_array[:, 13])
+    plot_spp_t(data_array[:, 0], data_array[:, 13])
 
-    #print(data_array[0:10])
+    print(data_array[0:10])
 
     make_csv(data_array)
     make_csv(data_array, "si")
